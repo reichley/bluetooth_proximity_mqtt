@@ -2,7 +2,7 @@
 
 Python code for getting the RSSI value of a Bluetooth device by address. Based on the value returned, can determine the proximity of the device.
 
-This code was ported to Python 3 based on [this repository](https://github.com/ewenchou/bluetooth-proximity).
+**This code was ported to Python 3 based on [this repository](https://github.com/ewenchou/bluetooth-proximity), primarily for use in [Home Assistant](https://github.com/home-assistant/home-assistant).**
 
 ## Requirements
 
@@ -18,7 +18,7 @@ sudo apt-get install python-bluez
 ## Installation
 
 ```
-git clone https://github.com/ewenchou/bluetooth-proximity.git
+git clone https://github.com/frederikbolding/bluetooth-proximity.git
 cd bluetooth-proximity
 sudo python setup.py install
 ```
