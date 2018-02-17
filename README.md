@@ -2,7 +2,7 @@
 
 Python code for getting the RSSI value of a Bluetooth device by address. Based on the value returned, can determine the proximity of the device.
 
-This code was adapted from [this Github](https://github.com/dagar/bluetooth-proximity) by Daniel Agar.
+This code was ported to Python 3 based on [this repository](https://github.com/ewenchou/bluetooth-proximity).
 
 ## Requirements
 
