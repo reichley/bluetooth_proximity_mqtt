@@ -41,8 +41,8 @@ class BluetoothRSSI(object):
             # Only do connection if not already connected
             if not self.connected:
                 self.connect()
-            if self.cmd_pkt is None:
-                self.prep_cmd_pkt()
+            # Command packet prepared each iteration to allow disconnect to trigger IOError
+            self.prep_cmd_pkt()
             # Send command to request RSSI
             rssi = bt.hci_send_req(
                 self.hci_sock, bt.OGF_STATUS_PARAM,
@@ -52,4 +52,6 @@ class BluetoothRSSI(object):
         except IOError:
             # Happens if connection fails (e.g. device is not in range)
             self.connected = False
+            # Socket recreated to allow device to successfully reconnect
+            self.bt_sock = bluetooth.BluetoothSocket(bluetooth.L2CAP)
             return None
