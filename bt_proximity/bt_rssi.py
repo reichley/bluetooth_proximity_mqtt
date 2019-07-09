@@ -14,6 +14,7 @@ class BluetoothRSSI(object):
         self.hci_fd = self.hci_sock.fileno()
         self.bt_sock = bluetooth.BluetoothSocket(bluetooth.L2CAP)
         self.bt_sock.settimeout(10)
+        self.closed = False
         self.connected = False
         self.cmd_pkt = None
 
@@ -31,6 +32,12 @@ class BluetoothRSSI(object):
         # Connecting via PSM 1 - Service Discovery
         self.bt_sock.connect_ex((self.addr, 1))
         self.connected = True
+    
+    def close(self):
+        """Close the bluetooth socket."""
+        self.bt_sock.close()
+        self.hci_sock.close()
+        self.closed = True
 
     def request_rssi(self):
         """Request the current RSSI value.
@@ -38,6 +45,9 @@ class BluetoothRSSI(object):
                  (i.e. the device is not in range).
         """
         try:
+            # If socket is closed, return nothing
+            if self.closed:
+                return None
             # Only do connection if not already connected
             if not self.connected:
                 self.connect()
