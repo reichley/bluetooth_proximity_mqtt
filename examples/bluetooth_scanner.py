@@ -44,7 +44,7 @@ def bluetooth_listen(
     """
     b = BluetoothRSSI(addr=addr)
     while True:
-        rssi = b.request_rssi()
+        rssi = int(''.join(map(str, b.request_rssi())))
         if debug:
             print("---")
             print("addr: {}, rssi: {}".format(addr, rssi))
