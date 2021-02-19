@@ -4,18 +4,56 @@ import datetime
 import time
 import threading
 import sys
+import os
+import paho.mqtt.publish as publish
+import paho.mqtt.client as mqtt
+import socket
 
 # List of bluetooth addresses to scan
-BT_ADDR_LIST = []
-DAILY = True  # Set to True to invoke callback only once per day per address
+BT_ADDR_LIST = ["e0:33:8e:5c:08:07"]
+DAILY = False # Set to True to invoke callback only once per day per address
 DEBUG = True  # Set to True to print out debug messages
-THRESHOLD = (-10, 10)
-SLEEP = 1
+THRESHOLD = (-10,10)
+SLEEP = 30
+devices = [
+        {"name": "nickp", "mac": "e0:33:8e:5c:08:07", "state": "not_home"}
+    ]
+
+# Provide name of the location where device is (this will form part of the state topic)
+LOCATION = socket.gethostname()
+
+# The final state topic will therefore be: HomeAssistant/Presence/LOCATION/DEVICE_NAME
+
+# Update the follow MQTT Settings for your system.
+MQTT_USER = "mosquitto"              # MQTT Username
+MQTT_PASS = "mosquitto"     # MQTT Password
+MQTT_CLIENT_ID = "bttracker"    # MQTT Client Id
+MQTT_HOST_IP = "10.0.1.237"      # MQTT HOST
+MQTT_PORT = 1883                # MQTT PORT (DEFAULT 1883)
+
+MQTT_AUTH = {
+    'username': MQTT_USER,
+    'password': MQTT_PASS
+}
 
 
-def dummy_callback():
-    print("Dummy callback function invoked")
-
+def dummy_callback(state):
+    # print("Dummy callback function invoked")
+    for device in devices:
+        mac = device['mac']
+        if mac in BT_ADDR_LIST:
+            # print(mac)
+            device['state'] = state
+        try:
+            publish.single("bt/presence/" + LOCATION + "/" + device['name'],
+                payload=device['state'],
+                hostname=MQTT_HOST_IP,
+                client_id=MQTT_CLIENT_ID,
+                auth=MQTT_AUTH,
+                port=MQTT_PORT,
+                protocol=mqtt.MQTTv311)
+        except:
+            pass
 
 def bluetooth_listen(
         addr, threshold, callback, sleep=1, daily=True, debug=False):
@@ -54,7 +92,7 @@ def bluetooth_listen(
             continue
         # Trigger if RSSI value is within threshold
         if threshold[0] < rssi < threshold[1]:
-            callback()
+            callback('home')
             if daily:
                 # Calculate the time remaining until next day
                 now = datetime.datetime.now()
@@ -66,6 +104,8 @@ def bluetooth_listen(
                     print("Seconds until tomorrow: {}".format(until_tomorrow))
                 else:
                     time.sleep(until_tomorrow)
+        else:
+            callback('not_home')
         # Delay between iterations
         time.sleep(sleep)
 
