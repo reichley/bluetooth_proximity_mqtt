@@ -8,27 +8,35 @@ import os
 import paho.mqtt.publish as publish
 import paho.mqtt.client as mqtt
 import socket
+import yaml
+
+credentials = yaml.safe_load(open('./creds.yaml'))
+dev1 = credentials['database']['dev1']
+user = credentials['database']['mqtt_user']
+passw = credentials['database']['mqtt_pass']
+server = credentials['database']['mqtt_server']
 
 # List of bluetooth addresses to scan
-BT_ADDR_LIST = ["e0:33:8e:5c:08:07"]
+BT_ADDR_LIST = [dev1]
 DAILY = False # Set to True to invoke callback only once per day per address
 DEBUG = True  # Set to True to print out debug messages
 THRESHOLD = (-10,10)
 SLEEP = 30
 devices = [
-        {"name": "nickp", "mac": "e0:33:8e:5c:08:07", "state": "not_home"}
+        {"name": "dev1", "mac": dev1, "state": "not_home"}
     ]
+hostname = socket.gethostname()
 
 # Provide name of the location where device is (this will form part of the state topic)
-LOCATION = socket.gethostname()
+LOCATION = hostname
 
 # The final state topic will therefore be: HomeAssistant/Presence/LOCATION/DEVICE_NAME
 
 # Update the follow MQTT Settings for your system.
-MQTT_USER = "mosquitto"              # MQTT Username
-MQTT_PASS = "mosquitto"     # MQTT Password
-MQTT_CLIENT_ID = "bttracker"    # MQTT Client Id
-MQTT_HOST_IP = "10.0.1.237"      # MQTT HOST
+MQTT_USER = user              # MQTT Username
+MQTT_PASS = passw     # MQTT Password
+MQTT_CLIENT_ID = "bttracker_{}".format(hostname)    # MQTT Client Id
+MQTT_HOST_IP = server      # MQTT HOST
 MQTT_PORT = 1883                # MQTT PORT (DEFAULT 1883)
 
 MQTT_AUTH = {

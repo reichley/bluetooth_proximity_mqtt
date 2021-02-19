@@ -1,0 +1,6 @@
+database:
+  dev1: 'e0:33:8e:5c:08:07'
+  dev2: ''
+  mqtt_user: 'mosquitto'
+  mqtt_pass: 'mosquitto'
+  mqtt_server: '10.0.1.237'
