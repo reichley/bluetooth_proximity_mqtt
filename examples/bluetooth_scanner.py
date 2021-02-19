@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 from bt_proximity import BluetoothRSSI
 import datetime
 import time
@@ -9,6 +9,7 @@ import paho.mqtt.publish as publish
 import paho.mqtt.client as mqtt
 import socket
 import yaml
+import json
 
 credentials = yaml.safe_load(open('./creds.yaml'))
 dev1 = credentials['database']['dev1']
@@ -23,7 +24,7 @@ DEBUG = True  # Set to True to print out debug messages
 THRESHOLD = (-10,10)
 SLEEP = 30
 devices = [
-        {"name": "dev1", "mac": dev1, "state": "not_home"}
+        {"name": "nick_bt", "mac": dev1, "state": "not_home"}
     ]
 hostname = socket.gethostname()
 
@@ -45,16 +46,17 @@ MQTT_AUTH = {
 }
 
 
-def dummy_callback(state):
+def presence_callback(stated, signal):
     # print("Dummy callback function invoked")
     for device in devices:
         mac = device['mac']
         if mac in BT_ADDR_LIST:
             # print(mac)
-            device['state'] = state
+            device['state'] = stated
         try:
-            publish.single("bt/presence/" + LOCATION + "/" + device['name'],
-                payload=device['state'],
+            publish.single("bt/presence/" + LOCATION,
+                # payload=device['state'],
+                payload=json.dumps({'id':device['name'], 'name':device['name'], 'state':device['state'], 'rssi':signal}),
                 hostname=MQTT_HOST_IP,
                 client_id=MQTT_CLIENT_ID,
                 auth=MQTT_AUTH,
@@ -90,17 +92,19 @@ def bluetooth_listen(
     """
     b = BluetoothRSSI(addr=addr)
     while True:
-        rssi = int(''.join(map(str, b.request_rssi())))
+        rssi = b.request_rssi()
         if debug:
             print("---")
             print("addr: {}, rssi: {}".format(addr, rssi))
         # Sleep and then skip to next iteration if device not found
         if rssi is None:
+            callback('not_home', -99)
             time.sleep(sleep)
             continue
         # Trigger if RSSI value is within threshold
-        if threshold[0] < rssi < threshold[1]:
-            callback('home')
+        int_rssi = int(''.join(map(str, b.request_rssi())))
+        if threshold[0] < int(''.join(map(str, b.request_rssi()))) < threshold[1]:
+            callback('home', int_rssi)
             if daily:
                 # Calculate the time remaining until next day
                 now = datetime.datetime.now()
@@ -113,7 +117,7 @@ def bluetooth_listen(
                 else:
                     time.sleep(until_tomorrow)
         else:
-            callback('not_home')
+            callback('not_home', int_rssi)
         # Delay between iterations
         time.sleep(sleep)
 
@@ -169,7 +173,7 @@ def main():
         sys.exit(1)
     threads = []
     for addr in BT_ADDR_LIST:
-        th = start_thread(addr=addr, callback=dummy_callback)
+        th = start_thread(addr=addr, callback=presence_callback)
         threads.append(th)
     while True:
         # Keep main thread alive
